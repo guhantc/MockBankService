@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eureka-server
+  namespace: hdfc-bank
+  labels:
+    app: eureka-server
+    component: service-discovery
+    version: v1.0.0
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: eureka-server
+  template:
+    metadata:
+      labels:
+        app: eureka-server
+        component: service-discovery
+        version: v1.0.0
+    spec:
+      containers:
+      - name: eureka-server
+        image: hdfc-bank/eureka-server:1.0.0
+        ports:
+        - containerPort: 8761
+          name: http
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "kubernetes"
+        - name: EUREKA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: eureka-secret
+              key: password
+        - name: JVM_OPTS
+          value: "-Xms512m -Xmx1024m -XX:+UseG1GC"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "0.2"
+          limits:
+            memory: "1Gi"
+            cpu: "0.5"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8761
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8761
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: logs
+        emptyDir: {}
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eureka-server
+  namespace: hdfc-bank
+  labels:
+    app: eureka-server
+    component: service-discovery
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8761
+    targetPort: 8761
+    protocol: TCP
+    name: http
+  selector:
+    app: eureka-server
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: eureka-secret
+  namespace: hdfc-bank
+type: Opaque
+stringData:
+  password: "hdfcbank123"

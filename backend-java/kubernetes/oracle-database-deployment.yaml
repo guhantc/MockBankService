@@ -1,0 +1,163 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: oracle-database
+  namespace: hdfc-bank
+  labels:
+    app: oracle-database
+    component: database
+    version: v21.3.0
+spec:
+  serviceName: oracle-database
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oracle-database
+  template:
+    metadata:
+      labels:
+        app: oracle-database
+        component: database
+        version: v21.3.0
+    spec:
+      containers:
+      - name: oracle-database
+        image: container-registry.oracle.com/database/express:21.3.0-xe
+        ports:
+        - containerPort: 1521
+          name: oracle
+        - containerPort: 5500
+          name: apex
+        env:
+        - name: ORACLE_PWD
+          valueFrom:
+            secretKeyRef:
+              name: oracle-secret
+              key: password
+        - name: ORACLE_CHARACTERSET
+          value: "AL32UTF8"
+        - name: ORACLE_EDITION
+          value: "xe"
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1"
+          limits:
+            memory: "4Gi"
+            cpu: "2"
+        volumeMounts:
+        - name: oracle-data
+          mountPath: /opt/oracle/oradata
+        - name: oracle-init
+          mountPath: /docker-entrypoint-initdb.d
+        livenessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - "sqlplus -s sys/$(ORACLE_PWD)@localhost:1521/XE as sysdba <<< 'SELECT 1 FROM DUAL;'"
+          initialDelaySeconds: 180
+          periodSeconds: 60
+          timeoutSeconds: 30
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - "sqlplus -s sys/$(ORACLE_PWD)@localhost:1521/XE as sysdba <<< 'SELECT 1 FROM DUAL;'"
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          timeoutSeconds: 15
+          failureThreshold: 5
+      volumes:
+      - name: oracle-init
+        configMap:
+          name: oracle-init-scripts
+  volumeClaimTemplates:
+  - metadata:
+      name: oracle-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: "fast-ssd"
+      resources:
+        requests:
+          storage: 50Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oracle-database
+  namespace: hdfc-bank
+  labels:
+    app: oracle-database
+    component: database
+spec:
+  type: ClusterIP
+  ports:
+  - port: 1521
+    targetPort: 1521
+    protocol: TCP
+    name: oracle
+  - port: 5500
+    targetPort: 5500
+    protocol: TCP
+    name: apex
+  selector:
+    app: oracle-database
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: oracle-secret
+  namespace: hdfc-bank
+type: Opaque
+stringData:
+  password: "hdfcbank123"
+  username: "system"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oracle-init-scripts
+  namespace: hdfc-bank
+data:
+  01-create-users.sql: |
+    -- Create tablespaces
+    CREATE TABLESPACE hdfc_data DATAFILE 'hdfc_data.dbf' SIZE 1G AUTOEXTEND ON;
+    CREATE TABLESPACE hdfc_index DATAFILE 'hdfc_index.dbf' SIZE 500M AUTOEXTEND ON;
+    
+    -- Create users for microservices
+    CREATE USER hdfc_user IDENTIFIED BY hdfcbank123 
+    DEFAULT TABLESPACE hdfc_data 
+    TEMPORARY TABLESPACE temp;
+    
+    CREATE USER hdfc_account IDENTIFIED BY hdfcbank123 
+    DEFAULT TABLESPACE hdfc_data 
+    TEMPORARY TABLESPACE temp;
+    
+    CREATE USER hdfc_loan IDENTIFIED BY hdfcbank123 
+    DEFAULT TABLESPACE hdfc_data 
+    TEMPORARY TABLESPACE temp;
+    
+    CREATE USER hdfc_card IDENTIFIED BY hdfcbank123 
+    DEFAULT TABLESPACE hdfc_data 
+    TEMPORARY TABLESPACE temp;
+    
+    CREATE USER hdfc_saga IDENTIFIED BY hdfcbank123 
+    DEFAULT TABLESPACE hdfc_data 
+    TEMPORARY TABLESPACE temp;
+    
+    -- Grant privileges
+    GRANT CONNECT, RESOURCE, DBA TO hdfc_user;
+    GRANT CONNECT, RESOURCE, DBA TO hdfc_account;
+    GRANT CONNECT, RESOURCE, DBA TO hdfc_loan;
+    GRANT CONNECT, RESOURCE, DBA TO hdfc_card;
+    GRANT CONNECT, RESOURCE, DBA TO hdfc_saga;
+    
+    -- Grant unlimited tablespace
+    GRANT UNLIMITED TABLESPACE TO hdfc_user;
+    GRANT UNLIMITED TABLESPACE TO hdfc_account;
+    GRANT UNLIMITED TABLESPACE TO hdfc_loan;
+    GRANT UNLIMITED TABLESPACE TO hdfc_card;
+    GRANT UNLIMITED TABLESPACE TO hdfc_saga;
