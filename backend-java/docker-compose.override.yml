@@ -1,0 +1,161 @@
+# Docker Compose Override for Development
+# This file extends docker-compose.yml with development-specific configurations
+
+version: '3.8'
+
+services:
+  # Development Oracle Database with additional tools
+  oracle-db:
+    environment:
+      - ORACLE_PWD=hdfcbank123
+      - ORACLE_CHARACTERSET=AL32UTF8
+    volumes:
+      - oracle_dev_data:/opt/oracle/oradata
+      - ./oracle-init:/docker-entrypoint-initdb.d
+      - ./database/scripts:/opt/oracle/scripts
+    ports:
+      - "1521:1521"
+      - "5500:5500"
+      - "8080:8080"  # APEX port
+
+  # Redis with additional monitoring
+  redis:
+    command: redis-server --appendonly yes --requirepass hdfcbank123
+    volumes:
+      - redis_dev_data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+
+  # Eureka Server with debug mode
+  eureka-server:
+    environment:
+      - SPRING_PROFILES_ACTIVE=development
+      - JAVA_OPTS=-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5005
+      - LOGGING_LEVEL_ROOT=DEBUG
+    ports:
+      - "8761:8761"
+      - "5005:5005"  # Debug port
+    volumes:
+      - ./logs/eureka:/app/logs
+
+  # API Gateway with debug mode
+  api-gateway:
+    environment:
+      - SPRING_PROFILES_ACTIVE=development
+      - JAVA_OPTS=-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5006
+      - LOGGING_LEVEL_ROOT=DEBUG
+      - LOGGING_LEVEL_COM_HDFC_BANK=TRACE
+    ports:
+      - "8080:8080"
+      - "5006:5006"  # Debug port
+    volumes:
+      - ./logs/api-gateway:/app/logs
+
+  # User Service with debug mode
+  user-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=development
+      - JAVA_OPTS=-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5007
+      - LOGGING_LEVEL_ROOT=DEBUG
+    ports:
+      - "8081:8081"
+      - "5007:5007"  # Debug port
+    volumes:
+      - ./logs/user-service:/app/logs
+
+  # SAGA Orchestrator with debug mode
+  saga-orchestrator:
+    environment:
+      - SPRING_PROFILES_ACTIVE=development
+      - JAVA_OPTS=-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5008
+      - LOGGING_LEVEL_ROOT=DEBUG
+    ports:
+      - "8090:8090"
+      - "5008:5008"  # Debug port
+    volumes:
+      - ./logs/saga-orchestrator:/app/logs
+
+  # Additional development services
+  
+  # Adminer for database management
+  adminer:
+    image: adminer:4.8.1
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=oracle-db
+    networks:
+      - hdfc-network
+    depends_on:
+      - oracle-db
+
+  # Redis Commander for Redis management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    restart: unless-stopped
+    ports:
+      - "8091:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:hdfcbank123
+    networks:
+      - hdfc-network
+    depends_on:
+      - redis
+
+  # Zipkin for distributed tracing
+  zipkin:
+    image: openzipkin/zipkin:latest
+    restart: unless-stopped
+    ports:
+      - "9411:9411"
+    environment:
+      - STORAGE_TYPE=mem
+    networks:
+      - hdfc-network
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    networks:
+      - hdfc-network
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:10.0.0
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=hdfcbank123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - hdfc-network
+    depends_on:
+      - prometheus
+
+volumes:
+  oracle_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
