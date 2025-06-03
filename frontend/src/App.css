@@ -1,38 +1,229 @@
+/* HDFC Bank App Specific Styles */
+
 .App {
-    text-align: center;
+  min-height: 100vh;
+  background-color: #ffffff;
 }
 
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+/* Header Enhancements */
+.header-shadow {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+/* Hero Section Enhancements */
+.hero-gradient {
+  background: linear-gradient(135deg, 
+    rgba(30, 58, 138, 0.9) 0%, 
+    rgba(59, 130, 246, 0.8) 50%, 
+    rgba(147, 197, 253, 0.7) 100%);
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+/* Card Enhancements */
+.service-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.App-link {
-    color: #61dafb;
+.service-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border-color: rgba(59, 130, 246, 0.3);
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+/* Product Card Enhancements */
+.product-card {
+  position: relative;
+  overflow: hidden;
+  background: white;
+  border-radius: 16px;
+  transition: all 0.4s ease;
+}
+
+.product-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.product-card:hover::before {
+  left: 100%;
+}
+
+.product-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Feature Icon Animations */
+.feature-icon {
+  transition: all 0.3s ease;
+}
+
+.feature-icon:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+/* Testimonial Card Enhancements */
+.testimonial-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%);
+  border-left: 4px solid #3b82f6;
+  transition: all 0.3s ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  border-left-color: #ef4444;
+}
+
+/* Button Enhancements */
+.btn-primary {
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  border: none;
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-primary:hover::before {
+  left: 100%;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(220, 38, 38, 0.4);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 2px solid #3b82f6;
+  color: #3b82f6;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: #3b82f6;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+/* Navigation Enhancements */
+.nav-dropdown {
+  background: white;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(8px);
+}
+
+.nav-item {
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+/* Footer Enhancements */
+.footer-gradient {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+}
+
+/* Mobile Responsive Enhancements */
+@media (max-width: 768px) {
+  .service-card {
+    margin-bottom: 1rem;
+  }
+  
+  .hero-title {
+    font-size: 2.5rem;
+    line-height: 1.2;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Loading States */
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Accessibility Enhancements */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .service-card {
+    border: 2px solid #000;
+  }
+  
+  .btn-primary {
+    border: 2px solid #000;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-break {
+    page-break-after: always;
+  }
 }
