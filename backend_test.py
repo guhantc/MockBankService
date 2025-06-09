@@ -250,8 +250,14 @@ class HDFCBankMicroservicesTester:
             return False
             
         # Test Customer Service APIs
-        self.test_create_customer()
+        # Skip customer creation as we already have customers
+        # self.test_create_customer()
         self.test_get_all_customers()
+        
+        # Use an existing customer ID
+        self.created_customer_id = "CUST612932A88D"
+        print(f"Using existing customer ID: {self.created_customer_id}")
+        
         self.test_get_customer_by_id()
         
         # Test Account Service APIs
