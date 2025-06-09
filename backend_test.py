@@ -88,14 +88,15 @@ class HDFCBankMicroservicesTester:
     def test_create_customer(self):
         """Test creating a new customer"""
         print("\n===== Testing Customer Creation =====")
+        timestamp = datetime.now().strftime('%H%M%S')
         customer_data = {
             "firstName": "Raj",
             "lastName": "Sharma", 
-            "email": f"raj.sharma{datetime.now().strftime('%H%M%S')}@email.com",
-            "phoneNumber": "+919876543210",
+            "email": f"raj.sharma{timestamp}@email.com",
+            "phoneNumber": f"+9198765{timestamp}",
             "dateOfBirth": "1990-05-15",
-            "panNumber": "ABCDE1234F",
-            "aadhaarNumber": "123456789012",
+            "panNumber": f"ABCDE{timestamp}F",
+            "aadhaarNumber": f"12345{timestamp}12",
             "address": "123 MG Road",
             "city": "Mumbai",
             "state": "Maharashtra", 
