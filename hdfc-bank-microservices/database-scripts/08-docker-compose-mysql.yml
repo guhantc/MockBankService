@@ -1,0 +1,110 @@
+# Docker Compose for HDFC Bank Microservices with MySQL
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: hdfc-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root@2024
+      MYSQL_USER: hdfc_user
+      MYSQL_PASSWORD: hdfc@2024
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - hdfc-network
+    command: --default-authentication-plugin=mysql_native_password
+
+  # Eureka Server
+  eureka-server:
+    build: ./eureka-server
+    container_name: hdfc-eureka
+    ports:
+      - "8761:8761"
+    networks:
+      - hdfc-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Customer Service
+  customer-service:
+    build: ./customer-service
+    container_name: hdfc-customer-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/hdfc_customer_db?useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: hdfc_user
+      SPRING_DATASOURCE_PASSWORD: hdfc@2024
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - mysql
+      - eureka-server
+    networks:
+      - hdfc-network
+    restart: on-failure
+
+  # Account Service
+  account-service:
+    build: ./account-service
+    container_name: hdfc-account-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/hdfc_account_db?useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: hdfc_user
+      SPRING_DATASOURCE_PASSWORD: hdfc@2024
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - mysql
+      - eureka-server
+    networks:
+      - hdfc-network
+    restart: on-failure
+
+  # Transaction Service
+  transaction-service:
+    build: ./transaction-service
+    container_name: hdfc-transaction-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/hdfc_transaction_db?useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: hdfc_user
+      SPRING_DATASOURCE_PASSWORD: hdfc@2024
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - mysql
+      - eureka-server
+    networks:
+      - hdfc-network
+    restart: on-failure
+
+  # phpMyAdmin for database management
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: hdfc-phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: hdfc_user
+      PMA_PASSWORD: hdfc@2024
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    networks:
+      - hdfc-network
+
+volumes:
+  mysql_data:
+
+networks:
+  hdfc-network:
+    driver: bridge
