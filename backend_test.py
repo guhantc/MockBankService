@@ -95,7 +95,7 @@ class HDFCBankMicroservicesTester:
             "email": f"raj.sharma{timestamp}@email.com",
             "phoneNumber": f"+9198765{timestamp[:6]}",
             "dateOfBirth": "1990-05-15",
-            "panNumber": "ABCDE1234F",
+            "panNumber": "ABCDE1236F",
             "aadhaarNumber": f"123456{timestamp[:6]}",
             "address": "123 MG Road",
             "city": "Mumbai",
