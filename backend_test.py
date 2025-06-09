@@ -112,8 +112,8 @@ class HDFCBankMicroservicesTester:
             data=customer_data
         )
         
-        if success and 'id' in response:
-            self.created_customer_id = response['id']
+        if success and 'customerId' in response:
+            self.created_customer_id = response['customerId']
             print(f"Created customer with ID: {self.created_customer_id}")
             return True
         return False
